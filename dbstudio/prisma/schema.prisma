@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:postgres@localhost:5432/postgres"
+}
+
+model GlobalAssetRegistry {
+  id           String   @id @default(uuid()) @db.Uuid
+  md5Hash      String   @map("md5_hash") @db.Text
+  filename     String?  @db.Text
+  fileSize     BigInt?  @map("file_size")
+  contentType  String?  @map("content_type") @db.Text
+  sourceType   String   @map("source_type") @db.Text
+  tenantId     String   @map("tenant_id") @db.Text
+  createdAt    DateTime @map("created_at") @default(now()) @db.Timestamptz()
+  updatedAt    DateTime @map("updated_at") @default(now()) @db.Timestamptz()
+
+  vectorChunks  VectorChunk[]
+  knowledgeTriples KnowledgeTriple[]
+
+  @@map("global_asset_registry")
+}
+
+model VectorChunk {
+  id         String   @id @default(uuid()) @db.Uuid
+  assetId    String?  @map("asset_id") @db.Uuid
+  chunkText  String   @map("chunk_text") @db.Text
+  embedding  String? @db.Text
+  sourceType String   @map("source_type") @db.Text
+  tenantId   String   @map("tenant_id") @db.Text
+  createdAt  DateTime @map("created_at") @default(now()) @db.Timestamptz()
+
+  asset GlobalAssetRegistry? @relation(fields: [assetId], references: [id])
+
+  @@map("vector_chunks")
+}
+
+model KnowledgeTriple {
+  id           String  @id @default(uuid()) @db.Uuid
+  assetId      String? @map("asset_id") @db.Uuid
+  entityA      String  @map("entity_a") @db.Text
+  entityB      String  @map("entity_b") @db.Text
+  relationship String  @db.Text
+  sourceText   String? @map("source_text") @db.Text
+  sourceType   String  @map("source_type") @db.Text
+  tenantId     String  @map("tenant_id") @db.Text
+  createdAt    DateTime @map("created_at") @default(now()) @db.Timestamptz()
+
+  asset GlobalAssetRegistry? @relation(fields: [assetId], references: [id])
+
+  @@map("knowledge_triples")
+}
+
+model SearchKeyword {
+  id        String   @id @default(uuid()) @db.Uuid
+  keyword   String   @db.Text
+  frequency Int      @default(1)
+  lastUsed  DateTime? @map("last_used") @db.Timestamptz()
+  tenantId  String   @map("tenant_id") @db.Text
+  createdAt DateTime @map("created_at") @default(now()) @db.Timestamptz()
+
+  @@unique([keyword, tenantId], name: "search_keywords_keyword_tenant_unique")
+  @@map("search_keywords")
+}
+
+model StrategyReport {
+  id         String   @id @default(uuid()) @db.Uuid
+  entityName String   @map("entity_name") @db.Text
+  reportJson Json?    @map("report_json") @db.JsonB
+  tenantId   String   @map("tenant_id") @db.Text
+  createdAt  DateTime @map("created_at") @default(now()) @db.Timestamptz()
+
+  @@map("strategy_reports")
+}
